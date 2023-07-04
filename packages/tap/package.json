@@ -1,0 +1,25 @@
+{
+  "name": "@pg-live-test/tap",
+  "version": "0.1.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Joseph Shaferman <joseph.shaferman@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/tap": "^15.0.8"
+  },
+  "prettier": {
+    "trailingComma": "all",
+    "bracketSpacing": false,
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": false,
+    "arrowParens": "always"
+  }
+}

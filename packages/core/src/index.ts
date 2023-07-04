@@ -9,7 +9,7 @@ const PG_SYMBOL_REGEX = /^[A-z]{1,63}$/
 /**
  *
  */
-interface SetupTestDatabase {
+export interface CreatePgTestHooks {
   connection: Client | Pool
   schema?: string
   tables: string[]
@@ -30,7 +30,7 @@ interface TestHooks {
 /**
  *
  */
-export function createPgTestHooks(options: SetupTestDatabase): TestHooks {
+export function createPgTestHooks(options: CreatePgTestHooks): TestHooks {
   const {
     connection,
     schema = "public",
