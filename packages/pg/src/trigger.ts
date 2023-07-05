@@ -1,13 +1,13 @@
 /**
  *
  */
-const CREATE_TEMP_TRIGGERS = "create_temp_triggers"
+const FUNCTION_NAME = "create_temp_triggers"
 
 /**
  *
  */
 const createCloneTriggersFunction = `
-CREATE OR REPLACE FUNCTION ${CREATE_TEMP_TRIGGERS}(schema_name name, table_names name[]) RETURNS void
+CREATE OR REPLACE FUNCTION ${FUNCTION_NAME}(schema_name name, table_names name[]) RETURNS void
 LANGUAGE plpgsql AS $$
 DECLARE r RECORD;
 BEGIN
@@ -38,18 +38,18 @@ $$;
 /**
  *
  */
-const cloneTriggers = `SELECT ${CREATE_TEMP_TRIGGERS}($1, $2);`
+const cloneTriggers = `SELECT ${FUNCTION_NAME}($1, $2);`
 
 /**
  *
  */
-const dropCloneTriggersFunction = `DROP FUNCTION IF EXISTS ${CREATE_TEMP_TRIGGERS};`
+const dropCloneTriggersFunction = `DROP FUNCTION IF EXISTS ${FUNCTION_NAME};`
 
 /**
  *
  */
-export const TRIGGERS = {
-  createCloneTriggersFunction,
-  cloneTriggers,
-  dropCloneTriggersFunction,
+export const Triggers = {
+  createCloneFunction: createCloneTriggersFunction,
+  clone: cloneTriggers,
+  dropCloneFunction: dropCloneTriggersFunction,
 }

@@ -1,5 +1,5 @@
 import type {Client, Pool} from "pg"
-import {TRIGGERS} from "./trigger"
+import {Triggers} from "./trigger"
 
 /**
  *
@@ -54,7 +54,7 @@ export function createPgTestHooks(options: CreatePgTestHooks): TestHooks {
   }
 
   if (triggers) {
-    statements.push(TRIGGERS.createCloneTriggersFunction)
+    statements.push(Triggers.createCloneFunction)
   }
 
   if (functions || triggers) {
@@ -67,8 +67,8 @@ export function createPgTestHooks(options: CreatePgTestHooks): TestHooks {
     before: async () => {
       await connection.query(query)
       if (triggers) {
-        await connection.query(TRIGGERS.cloneTriggers, [schema, tables])
-        await connection.query(TRIGGERS.dropCloneTriggersFunction)
+        await connection.query(Triggers.clone, [schema, tables])
+        await connection.query(Triggers.dropCloneFunction)
       }
     },
     beforeEach: () => connection.query("BEGIN"),

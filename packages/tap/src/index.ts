@@ -1,20 +1,25 @@
-import {createPgTestHooks, CreatePgTestHooks} from "@pg-live-test/core"
+/**
+ *
+ */
+interface TestHooks {
+  before: () => any
+  beforeEach: () => any
+  afterEach: () => any
+  after: () => any
+}
 
 /**
  *
  */
-interface SetupPgTestHooks extends CreatePgTestHooks {
+interface SetupTestHooks extends TestHooks {
   testPrefix?: string
 }
 
 /**
  *
  */
-export function setupPgTestHooks(
-  options: SetupPgTestHooks,
-): (t: Tap.Test) => void {
-  const {testPrefix} = options
-  const {before, beforeEach, afterEach, after} = createPgTestHooks(options)
+export function setupTestHooks(options: SetupTestHooks): (t: Tap.Test) => void {
+  const {testPrefix, before, beforeEach, afterEach, after} = options
   return (t) => {
     if (testPrefix && !new RegExp(`^${testPrefix}`, "i").test(t.name)) {
       return

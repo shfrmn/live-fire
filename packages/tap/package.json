@@ -1,12 +1,19 @@
 {
-  "name": "@pg-live-test/tap",
+  "name": "@live-fire/tap",
   "version": "0.1.0",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublish": "npm run build"
   },
   "keywords": [],
   "author": "Joseph Shaferman <joseph.shaferman@gmail.com>",
