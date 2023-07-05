@@ -1,12 +1,13 @@
 /**
  *
  */
-const FUNCTION_NAME = "create_temp_triggers"
+const FUNCTION_NAME = "pg_temp.create_temp_triggers"
 
 /**
  *
  */
 const createCloneTriggersFunction = `
+SELECT set_config('search_path', 'pg_temp,' || current_setting('search_path'), false);
 CREATE OR REPLACE FUNCTION ${FUNCTION_NAME}(schema_name name, table_names name[]) RETURNS void
 LANGUAGE plpgsql AS $$
 DECLARE r RECORD;
@@ -21,14 +22,18 @@ BEGIN
       action_statement
     FROM information_schema.triggers
     WHERE trigger_schema = schema_name
-      AND event_object_table = ANY(table_names)
+      AND (
+        table_names IS NULL
+        OR table_names = '{}'
+        OR event_object_table = ANY(table_names)
+      )
   )
   LOOP
     EXECUTE 'CREATE TRIGGER '
       || r.trigger_name || ' '
       || r.action_timing || ' ' || r.event_manipulation || ' '
       || 'ON pg_temp.' || r.event_object_table || ' '
-      || 'FOR EACH ROW' || coalesce(' WHEN ' || r.action_condition, '') || ' '
+      || 'FOR EACH ROW' || coalesce(' WHEN (' || r.action_condition || ')', '') || ' '
       || r.action_statement;
   END LOOP;
 END;
@@ -38,18 +43,12 @@ $$;
 /**
  *
  */
-const cloneTriggers = `SELECT ${FUNCTION_NAME}($1, $2);`
-
-/**
- *
- */
-const dropCloneTriggersFunction = `DROP FUNCTION IF EXISTS ${FUNCTION_NAME};`
+const createTriggers = `SELECT ${FUNCTION_NAME}($1, $2);`
 
 /**
  *
  */
 export const Triggers = {
-  createCloneFunction: createCloneTriggersFunction,
-  clone: cloneTriggers,
-  dropCloneFunction: dropCloneTriggersFunction,
+  createFunction: createCloneTriggersFunction,
+  create: createTriggers,
 }

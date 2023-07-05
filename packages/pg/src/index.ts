@@ -1,5 +1,6 @@
 import type {Client, Pool} from "pg"
 import {Triggers} from "./trigger"
+import {Tables} from "./table"
 
 /**
  *
@@ -12,8 +13,7 @@ const PG_SYMBOL_REGEX = /^[A-z]{1,63}$/
 export interface CreatePgTestHooks {
   connection: Client | Pool
   schema?: string
-  tables: string[]
-  functions?: boolean
+  tables?: string[]
   triggers?: boolean
 }
 
@@ -31,44 +31,27 @@ interface TestHooks {
  *
  */
 export function createPgTestHooks(options: CreatePgTestHooks): TestHooks {
-  const {
-    connection,
-    schema = "public",
-    tables,
-    functions = false,
-    triggers = false,
-  } = options
+  const {connection, schema = "public", tables, triggers = true} = options
 
-  if (!PG_SYMBOL_REGEX.test(schema)) {
-    throw new Error(`Invalid schema name`)
+  if (
+    !(tables || [])
+      .concat(schema)
+      .every((symbol) => PG_SYMBOL_REGEX.test(symbol))
+  ) {
+    throw new Error(`Invalid symbol name`)
   }
 
-  const statements = tables
-    .filter((table) => PG_SYMBOL_REGEX.test(table))
-    .map((table) => {
-      return `CREATE TEMP TABLE "${table}" (LIKE "${table}" INCLUDING ALL) ON COMMIT DELETE ROWS;`
-    })
-
-  if (statements.length !== tables.length || !PG_SYMBOL_REGEX.test(schema)) {
-    throw new Error(`Invalid schema or table name`)
-  }
-
-  if (triggers) {
-    statements.push(Triggers.createCloneFunction)
-  }
-
-  if (functions || triggers) {
-    statements.push(`SET search_path TO pg_temp, "${schema}";`)
-  }
-
-  const query = statements.join("\n").trim()
+  const statements = [
+    Tables.createFunction,
+    ...(triggers ? [Triggers.createFunction] : []),
+  ]
 
   return {
     before: async () => {
-      await connection.query(query)
+      await connection.query(statements.join("\n"))
+      await connection.query(Tables.create, [schema, tables])
       if (triggers) {
-        await connection.query(Triggers.clone, [schema, tables])
-        await connection.query(Triggers.dropCloneFunction)
+        await connection.query(Triggers.create, [schema, tables])
       }
     },
     beforeEach: () => connection.query("BEGIN"),
