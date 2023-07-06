@@ -6,7 +6,8 @@ const FUNCTION_NAME = "pg_temp.create_temp_tables"
 /**
  *
  */
-const createTempTablesFunction = `
+const CREATE_TEMP_TABLES_FUNCTION = `
+SELECT set_config('search_path', 'pg_temp', false);
 CREATE OR REPLACE FUNCTION ${FUNCTION_NAME}(schema_name name, table_names name[]) RETURNS void
 LANGUAGE plpgsql AS $$
 DECLARE r RECORD;
@@ -21,22 +22,22 @@ BEGIN
       )
   )
   LOOP
-    EXECUTE 'CREATE TEMP TABLE' || ' "' || r.table_name || '" '
-      || '(LIKE "' || r.table_name || '" INCLUDING ALL) ON COMMIT DELETE ROWS';
+    EXECUTE 'CREATE TEMP TABLE IF NOT EXISTS' || ' "' || r.table_name || '" '
+      || '(LIKE "' || r.table_schema || '"."' || r.table_name || '" INCLUDING ALL) ON COMMIT DELETE ROWS';
   END LOOP;
 END;
 $$;
-`.trimStart()
+`
 
 /**
  *
  */
-const createTempTables = `SELECT ${FUNCTION_NAME}($1, $2);`
+const CREATE_TEMP_TABLES = `SELECT ${FUNCTION_NAME}($1, $2);`
 
 /**
  *
  */
 export const Tables = {
-  createFunction: createTempTablesFunction,
-  create: createTempTables,
+  createFunction: CREATE_TEMP_TABLES_FUNCTION,
+  create: CREATE_TEMP_TABLES,
 }

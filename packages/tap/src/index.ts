@@ -11,19 +11,9 @@ interface TestHooks {
 /**
  *
  */
-interface SetupTestHooks extends TestHooks {
-  testPrefix?: string
-}
-
-/**
- *
- */
-export function setupTestHooks(options: SetupTestHooks): (t: Tap.Test) => void {
-  const {testPrefix, before, beforeEach, afterEach, after} = options
+export function setupTestHooks(options: TestHooks): (t: Tap.Test) => void {
+  const {before, beforeEach, afterEach, after} = options
   return (t) => {
-    if (testPrefix && !new RegExp(`^${testPrefix}`, "i").test(t.name)) {
-      return
-    }
     t.before(before)
     t.beforeEach(beforeEach)
     t.afterEach(afterEach)

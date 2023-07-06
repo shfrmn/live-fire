@@ -1,6 +1,8 @@
 import type {Client, Pool} from "pg"
-import {Triggers} from "./trigger"
+import {Connection} from "./connection"
 import {Tables} from "./table"
+import {Transaction} from "./transaction"
+import {Triggers} from "./trigger"
 
 /**
  *
@@ -32,11 +34,8 @@ interface TestHooks {
  */
 export function createPgTestHooks(options: CreatePgTestHooks): TestHooks {
   const {connection, schema = "public", tables, triggers = true} = options
-
   if (
-    !(tables || [])
-      .concat(schema)
-      .every((symbol) => PG_SYMBOL_REGEX.test(symbol))
+    ![...(tables || []), schema].every((symbol) => PG_SYMBOL_REGEX.test(symbol))
   ) {
     throw new Error(`Invalid symbol name`)
   }
@@ -46,16 +45,29 @@ export function createPgTestHooks(options: CreatePgTestHooks): TestHooks {
     ...(triggers ? [Triggers.createFunction] : []),
   ]
 
+  /**
+   * Allows sharing state between test hooks.
+   *
+   * Currently stores selected `client` instance that all queries should be run on
+   * and the unmodified `.query()` function.
+   */
+  const state = Connection.connect(connection).then((client) => {
+    return {client, runQuery: Connection.proxy(connection, client)}
+  })
+
   return {
     before: async () => {
-      await connection.query(statements.join("\n"))
-      await connection.query(Tables.create, [schema, tables])
+      const {runQuery} = await state
+      await runQuery(statements.join("\n"))
+      await runQuery(Tables.create, [schema, tables])
       if (triggers) {
-        await connection.query(Triggers.create, [schema, tables])
+        await runQuery(Triggers.create, [schema, tables])
       }
     },
-    beforeEach: () => connection.query("BEGIN"),
-    afterEach: () => connection.query("COMMIT"),
-    after: () => connection.end(),
+    beforeEach: () => state.then(({runQuery}) => runQuery(Transaction.begin)),
+    afterEach: () => state.then(({runQuery}) => runQuery(Transaction.commit)),
+    after: () => {
+      return state.then(({client}) => Connection.disconnect(connection, client))
+    },
   }
 }

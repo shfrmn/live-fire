@@ -6,8 +6,7 @@ const FUNCTION_NAME = "pg_temp.create_temp_triggers"
 /**
  *
  */
-const createCloneTriggersFunction = `
-SELECT set_config('search_path', 'pg_temp,' || current_setting('search_path'), false);
+const CREATE_CLONE_TRIGGERS_FUNCTION = `
 CREATE OR REPLACE FUNCTION ${FUNCTION_NAME}(schema_name name, table_names name[]) RETURNS void
 LANGUAGE plpgsql AS $$
 DECLARE r RECORD;
@@ -29,7 +28,7 @@ BEGIN
       )
   )
   LOOP
-    EXECUTE 'CREATE TRIGGER '
+    EXECUTE 'CREATE OR REPLACE TRIGGER '
       || r.trigger_name || ' '
       || r.action_timing || ' ' || r.event_manipulation || ' '
       || 'ON pg_temp.' || r.event_object_table || ' '
@@ -38,17 +37,17 @@ BEGIN
   END LOOP;
 END;
 $$;
-`.trimStart()
+`
 
 /**
  *
  */
-const createTriggers = `SELECT ${FUNCTION_NAME}($1, $2);`
+const CREATE_TRIGGERS = `SELECT ${FUNCTION_NAME}($1, $2);`
 
 /**
  *
  */
 export const Triggers = {
-  createFunction: createCloneTriggersFunction,
-  create: createTriggers,
+  createFunction: CREATE_CLONE_TRIGGERS_FUNCTION,
+  create: CREATE_TRIGGERS,
 }
